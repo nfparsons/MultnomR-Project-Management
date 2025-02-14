@@ -1,0 +1,884 @@
+---
+title: "Setting Up a Reproducible R Analysis Environment"
+author: "MultnomR CoP"
+format:
+  revealjs:
+    auto-stretch: false
+    code-fold: show
+    theme: league
+execute:
+    echo: false
+    eval: true
+    message: false
+    warning: false
+    error: false
+---
+
+```{r}
+#| label: set-working-directory
+#| message: false
+#| warning: false
+#| error: false
+
+require(here)
+here::i_am("_archive/_anchor.R")
+```
+
+```{r}
+#| label: load-packages
+#| message: false
+#| warning: false
+#| error: false
+
+source(
+  here("_scripts", "packages.R")
+)
+```
+
+```{r}
+#| label: set-options
+#| message: false
+#| warning: false
+#| error: false
+
+source(
+  here("_scripts", "global_parameters.R")
+)
+```
+
+## The Importance of Structure
+
+-   Why is project structure important for reproducible research?
+    -   Organization: Makes it easy to find files and understand the project.
+    -   Reproducibility: Ensures others (and your future self) can easily run your code.
+    -   Collaboration: Facilitates teamwork.
+
+::: notes
+Remind audience about the "R for the Rest of Us" blog post that inspired this. Briefly mention the benefits of each point.
+
+-   **Organization:** Imagine trying to find a specific file in a project with hundreds of scripts and datasets scattered haphazardly. A well-defined structure eliminates this headache. It makes your project easy to navigate, both for you and anyone else who might need to work with it.
+
+-   **Reproducibility:** This is the cornerstone of good research. If you can't reproduce your results, your work is, well, not very useful. A clear project structure makes it much easier for someone (including your future self!) to understand the steps you took and replicate your analysis. It removes ambiguity and prevents errors caused by incorrect file paths or missing dependencies.
+
+-   **Collaboration:** If you're working on a team, a shared project structure is essential. It ensures everyone is on the same page and can easily find the files they need. This avoids confusion and streamlines the collaborative process.
+:::
+
+## The Importance of Structure
+
+-   We'll walk through a practical example, covering:
+    -   Project setup with `here`
+    -   Package management with `pacman`
+    -   Global parameters and API keys
+    -   Reproducibility best practices
+
+::: notes
+Remind audience about the "R for the Rest of Us" blog post that inspired this. Briefly mention the benefits of each point.
+
+-   **Organization:** Imagine trying to find a specific file in a project with hundreds of scripts and datasets scattered haphazardly. A well-defined structure eliminates this headache. It makes your project easy to navigate, both for you and anyone else who might need to work with it.
+
+-   **Reproducibility:** This is the cornerstone of good research. If you can't reproduce your results, your work is, well, not very useful. A clear project structure makes it much easier for someone (including your future self!) to understand the steps you took and replicate your analysis. It removes ambiguity and prevents errors caused by incorrect file paths or missing dependencies.
+
+-   **Collaboration:** If you're working on a team, a shared project structure is essential. It ensures everyone is on the same page and can easily find the files they need. This avoids confusion and streamlines the collaborative process.
+:::
+
+## Project Setup with `here`
+
+-   The `here` package: A powerful tool for managing file paths.
+-   Why use `here`?
+    -   Avoids hardcoded paths, making your project portable.
+    -   Ensures consistent file referencing across different systems.
+
+```{r}
+#| eval: false
+#| echo: true
+
+require(here)
+here::i_am("_archive/_anchor.R")
+```
+
+::: notes
+-   Demonstration:
+    -   `here::i_am("_archive/_anchor.R")` - Anchors the project root.
+    -   All other file paths are relative to this anchor.
+-   Show file structure diagram (e.g., using `tree` output or a visual representation).
+-   Show an example of a hardcoded path vs. using here(). Emphasize the portability advantage. Mention the \_anchor.R file and its purpose.
+
+Let's dive into the practical side of project setup, starting with the `here` package. This is a fantastic tool for managing file paths within your project. The key idea behind `here` is to avoid hardcoding file paths, which can be a real source of problems when you move your project to a different computer or share it with someone else.
+
+The core of `here` is the `i_am()` function. In our project, we use `here::i_am("_archive/_anchor.R")`. This line essentially tells `here` where the root of your project is located. Think of it as setting an anchor point. The `_archive/_anchor.R` file itself can be a very simple, even empty file. Its sole purpose is to serve as this anchor.
+
+(Show a file structure diagram – either a visual one or the output of the `tree` command in your terminal. Point to the `_archive/_anchor.R` file in the diagram).
+
+As you can see in the diagram, all other file paths in our project are defined *relative* to this anchor. So, instead of writing something like `/Users/yourname/projects/myproject/data/data.csv`, we would use `here("data", "data.csv")`.
+
+(Show a slide with an example of a hardcoded path versus the `here()` approach).
+
+This `here()` approach has two huge advantages. First, it makes your code much more readable and easier to understand. Second, and even more importantly, it makes your project portable. You can move it anywhere, and as long as the relative paths within your project remain the same, your code will still work perfectly. No more having to manually update dozens of file paths!
+
+This is why `here` is so crucial for reproducible research. It ensures that your project can be easily shared and run by others, regardless of their file system structure."
+:::
+
+## Project Setup with `here`
+
+![](_images/file_structure_1.png)
+
+::: notes
+(Show a file structure diagram – either a visual one or the output of the `tree` command in your terminal. Point to the `_archive/_anchor.R` file in the diagram).
+
+As you can see in the diagram, all other file paths in our project are defined *relative* to this anchor. So, instead of writing something like `/Users/yourname/projects/myproject/data/data.csv`, we would use `here("data", "data.csv")`.
+:::
+
+## Project Setup with `here`
+
+![](_images/anchor_R.png)
+
+## Project Setup with `here`
+
+**Hardcoded Path:**
+
+```{r}
+#| eval: false
+#| echo: true
+
+# This is fragile and not portable!
+data <- read.csv("/Users/yourname/Documents/myproject/data/data.csv") 
+here() 
+```
+
+**`here()` Path:**
+
+```{r}
+#| eval: false
+#| echo: true
+
+# This is robust and portable!
+data <- read.csv(here("data", "data.csv"))
+```
+
+::: notes
+Let's look at a concrete example of why hardcoded paths are problematic and how `here` solves this.
+
+(Point to the hardcoded path example)
+
+This first line of code uses a hardcoded path to read a CSV file. It specifies the absolute path to the file, starting from the root directory. This works fine on *your* computer, but what happens if you share this code with someone else, or if you move your project to a different computer? The path will likely be different, and the code will break.
+
+(Point to the `here()` path example)
+
+This second line of code uses the `here()` function to construct the path. It specifies the path relative to the project root, which we defined earlier using `here::i_am()`. This means that no matter where your project is located, the code will always find the correct file.
+
+This simple change makes your code much more robust and portable. It's a key step in ensuring that your analysis can be easily reproduced by others, regardless of their file system structure.
+:::
+
+## Package Management with `pacman`
+
+-   The `pacman` package: Streamlines package installation and loading.
+-   Benefits of `pacman`:
+    -   Easy installation: `p_install()`
+    -   Efficient loading: `p_load()` - Installs if needed, loads if already installed.
+    -   Conflict management.
+
+::: notes
+-   Show your `packages.R` script. Highlight key sections:
+    -   `p_load()` for core packages, tidyverse, spatial analysis, etc.
+    -   `p_load_gh()` for packages from GitHub.
+    -   `conflicts_prefer()` for resolving function name conflicts.
+-   Emphasize the organization of your packages by category (core, data manipulation, visualization, etc.).
+-   Explain why categorizing packages is helpful. Mention the CRAN and GitHub package sources. Explain why resolving conflicts is important.
+
+Now, let's talk about managing R packages, which are essential for extending R's capabilities. We use the `pacman` package for this, and it makes the whole process much smoother. `pacman` provides functions like `p_install()` for installing packages and `p_load()` for loading them. The beauty of `p_load()` is that it's smart: if a package isn't installed, it will install it, and if it's already installed, it will simply load it.
+
+(Show your `packages.R` script on the screen. You might want to use a code chunk with `knitr::read_chunk()` to embed the script directly in your presentation, or simply have it open in your editor and switch to it during the presentation).
+
+As you can see, our `packages.R` script is organized into sections. This is a deliberate choice. We've grouped our packages by category: core packages, data manipulation packages, visualization packages, and so on. This categorization is incredibly helpful for a few reasons. First, it makes it easier to find the packages you need. Second, it helps you understand the dependencies between packages. For example, you know that all the packages in the "Data Manipulation" section are likely used together for data cleaning and transformation.
+
+Within each section, we use `p_load()` to load the packages. For instance, we load the entire tidyverse suite, which includes `dplyr`, `tidyr`, `ggplot2`, and other essential packages, all with a single line. We also have sections for spatial analysis packages, time series packages, and so on.
+
+You'll also notice the `p_load_gh()` function. This is how we install packages directly from GitHub. This is useful for packages that are still in development or not yet available on CRAN, the Comprehensive R Archive Network, which is the main repository for R packages. So, `p_load()` handles packages from CRAN, and `p_load_gh()` handles packages from GitHub.
+
+Finally, we have the `conflicts_prefer()` function. This is crucial for resolving function name conflicts. Sometimes, two different packages might have functions with the same name. This can lead to unexpected behavior. `conflicts_prefer()` allows you to specify which package's function you want to use in case of a conflict, ensuring your code works as intended. This is a very important step for maintaining code clarity and avoiding errors.
+:::
+
+## Package Management with `pacman`
+
+```{r}
+#| eval: false
+#| echo: true
+
+# Project/Script Title: Loading R Packages for Vital Records Processing
+# Author: N.F. Parsons
+# Date Created: 2025-02-05
+# Email: nathan.parsons@multco.us
+# Description: This script loads all necessary R packages for processing vital records data.
+
+# -----------------------------------------------------------------------------
+# 1. Setup/Dependencies (Package Manager)
+# -----------------------------------------------------------------------------
+
+if (!require("pacman")) {
+  install.packages("pacman", repos = "https://cran.rstudio.org")
+}
+library(pacman)
+
+# -----------------------------------------------------------------------------
+# 2. Package Loading (Streamlined and Reorganized)
+# -----------------------------------------------------------------------------
+
+# Core/Essential Packages (General R use)
+p_load(
+  here,          # Folder/file management
+  conflicted,    # Package conflict management
+  english,       # Translate integers into text
+  labelled,      # Manipulate variable/value metadata
+  rlang,         # Functions for base R and tidyverse features
+  xfun,          # Miscellaneous functions
+  rio,           # Universal import/export
+  archive,       # Archive files
+  filesstrings,  # String manipulation
+  googledrive,   # Interact with Google Drive
+  knitr          # Dynamic report generation
+)
+
+# Data Manipulation and Transformation (Tidyverse first, then others)
+p_load(
+  tidyverse,      # Tidy data handling and analysis (includes dplyr, tidyr, ggplot2, etc.)
+  janitor,       # Data cleaning and examination
+  bestNormalize, # Data normalization
+  mice,          # Multivariate imputation
+  anesrake,      # ANES Raking
+  skimr          # Summary statistics
+)
+
+# Tables
+p_load(
+  gt,            # Presentation-ready tables
+  gtsummary,     # Publication-ready tables
+  flextable      # MS Office compatible tables
+)
+
+# Spatial Analysis (sf preferred, then others)
+p_load(
+  sf,            # Simple features (primary spatial package)
+  tidycensus,    # US Census data
+  tidygeocoder,  # Geocoding
+  geojsonio,     # GeoJSON/TopoJSON conversion
+  tmap,          # Thematic maps
+  tmaptools,     # Thematic map tools
+  osmdata,       # OpenStreetMap data
+  # ggmap,       # Spatial visualization (Consider if needed with tmap)
+  maps           # Draw geographical maps (Consider if needed with sf/tmap)
+)
+
+# Time Series
+p_load(
+  xts,           # Extensible time series
+  spacetime,     # Spatio-temporal data
+  tsibble,       # Tidy temporal data frames
+  slider,        # Sliding window functions
+  imputeTS,      # Time series imputation
+  feasts,        # Time series feature extraction
+  forecast,      # Time series forecasting
+  trending,      # Trending analysis
+  tibbletime     # Time-aware tibbles
+)
+
+# Visualization (ggplot2 related first)
+p_load(
+  scales,        # Graphical scales (often used with ggplot2)
+  showtext,      # Easy font use in plots
+  patchwork,     # Plot composition
+  ggpp,          # ggplot2 extensions
+  ggExtra,       # ggplot2 enhancements
+  ggalt,         # Extra ggplot2 geoms/stats
+  ggpubr,        # Easy plot creation
+  ggridges,      # Ridgeline plots
+  ggfittext,     # Improved text rendering
+  ggtext,         # Improved text rendering
+  ggthemes,       # ggplot2 themes
+  ggsci,          # ggplot2 color palettes
+  hrbrthemes,     # ggplot2 themes
+  viridis         # ggplot2 color palettes
+)
+
+# Visualization (GitHub)
+p_load_gh(
+  "AliciaSchep/gglabeller",  # Easy plot labeling
+  "MarcellGranat/ggProfessional", # Professional ggplot2
+  "mattcowgill/ggannotate"  # Easy plot annotation
+)
+
+# Visualization (Other)
+p_load(
+  # extrafont,  # Font tools (Consider if needed with showtext)
+  magick,        # Image processing (Consider if actively used)
+  xkcd,          # xkcd theme (Consider if actively used)
+  harrypotter    # Harry Potter theme (Consider if actively used)
+)
+
+# Compatibility & Other
+p_load(
+  officedown,    # Microsoft Office compatibility
+  DBI,          # Database interaction
+  units,         # Measurement units
+  yardstick,     # Model metrics
+  surveillance   # Epidemic modeling
+)
+
+
+
+# -----------------------------------------------------------------------------
+# 3. Conflict Resolution (After loading)
+# -----------------------------------------------------------------------------
+
+conflicts_prefer(
+  dplyr::filter, 
+  dplyr::summarize, 
+  dplyr::select, 
+  janitor::clean_names
+)
+
+# -----------------------------------------------------------------------------
+# 4. Session Information
+# -----------------------------------------------------------------------------
+
+sessionInfo()
+
+# -----------------------------------------------------------------------------
+# 5. Confirmation output
+# -----------------------------------------------------------------------------
+
+str_glue("Packages loaded. \n")
+
+# -----------------------------------------------------------------------------
+# End of Script
+# -----------------------------------------------------------------------------
+
+```
+
+## Global Parameters and API Keys
+
+-   The `global_parameters.R` script: Centralized location for settings.
+-   Key elements:
+    -   API keys: Stored as environment variables for security. **Never** hardcode API keys directly in your scripts.
+    -   File paths: `gis_repo`, `data_repo` - Again, ideally from environment variables.
+    -   Random seed: `set.seed(13)` - Essential for reproducibility.
+    -   `gtsummary` and `flextable` defaults.
+    -   Font loading with `showtext`.
+
+::: notes
+Show the code and explain each section. Stress the importance of environment variables for API keys. Explain the purpose of each global parameter.
+
+Now, let's move on to the `global_parameters.R` script. This script acts as a central hub for all the settings that affect your R project. It's where we define global parameters, manage API keys, and set options for things like table formatting and font loading.
+
+(Show the `global_parameters.R` script on the screen, either embedded or by switching to your editor).
+
+The most crucial part of this script, and something I want to emphasize strongly, is the handling of API keys. As you can see, we *never* store API keys directly in the script. Instead, we retrieve them from environment variables. This is absolutely essential for security. API keys are like passwords; you should never expose them in your code, especially if you're sharing your project.
+
+(Point to the lines where you retrieve API keys using `Sys.getenv()`).
+
+We use `Sys.getenv()` to get the values of these environment variables. We also include checks to make sure the API keys are actually set. If they're not, the script will stop with an error message, reminding you to set them. This is a good practice to prevent your code from running with missing or incorrect API keys.
+
+Next, we define variables for important file paths: `gis_repo` and `data_repo`. These point to the directories where we store our GIS shapefiles and other data files, respectively. Like API keys, it's best practice to store these as environment variables as well.
+
+(Explain the purpose of each file path and how it's used in your project).
+
+We then set a random seed using `set.seed(13)`. This is vital for reproducibility. Setting a random seed ensures that if your code involves any random processes, like simulations or bootstrapping, you'll get the same results every time you run it. This is essential for verifying your work and for others to reproduce your findings.
+
+(Explain what `options(scipen = 9999)` does and why you set it. It controls scientific notation).
+
+Finally, we configure the default themes for `gtsummary` and `flextable`, which are packages we use for creating publication-ready tables. This ensures consistency in our table formatting throughout the project. We also load fonts using `showtext::showtext_auto()`. This allows us to use custom fonts in our plots and tables.
+
+By centralizing all these settings in one script, we make our project more organized, reproducible, and easier to manage. It also prevents us from having to repeat these settings in multiple scripts, reducing the risk of errors and inconsistencies.
+:::
+
+## Global Parameters and API Keys
+
+```{r}
+#| eval: false 
+#| echo: true 
+
+# Project/Script Title: Setting Global Parameters and Resolving Conflicts
+# Author: N.F. Parsons
+# Date: 2025-02-05
+# Email: nathan.parsons@multco.us
+# Description: This script sets global parameters, resolves conflicts between packages,
+#              loads fonts, sets API keys, and sets a random seed for reproducibility.
+
+# -----------------------------------------------------------------------------
+# 1. Setup/Dependencies
+# -----------------------------------------------------------------------------
+
+# Install packages if not already installed (using a helper function)
+if (!require("pacman")) {
+  install.packages("pacman", repos = "https://cran.rstudio.org")
+}
+library(pacman)
+
+p_load("magick", "janitor", "dplyr", "tidycensus", "sysfonts", "rscopus", 
+       "gtsummary", "flextable", "showtext", "ggmap", "stringr")
+
+
+# -----------------------------------------------------------------------------
+# 2. Global Parameters/Constants
+# -----------------------------------------------------------------------------
+
+# API Keys (Store securely, ideally in environment variables)
+elsevier_api_key <- Sys.getenv("ELSEVIER_API_KEY")  # Get from environment
+census_api_key <- Sys.getenv("CENSUS_API_KEY") # Get from environment
+google_api_key <- Sys.getenv("GOOGLE_API_KEY") # Get from environment
+
+# Check if API keys are set (important for security)
+if (elsevier_api_key == "") {
+  stop("Elsevier API key not found. Set the ELSEVIER_API_KEY environment variable.")
+}
+if (census_api_key == "") {
+  stop("Census API key not found. Set the CENSUS_API_KEY environment variable.")
+}
+if (google_api_key == "") {
+  stop("Google API key not found. Set the GOOGLE_API_KEY environment variable.")
+}
+
+# GIS repo (set for your own use)
+gis_repo <- Sys.getenv("GIS_SHAPEFILE_REPO")
+
+# Check if GIS repo is set
+if (gis_repo == "") {
+  stop("GIS shapefile repository not found. Set the GIS_SHAPEFILE_REPO environment variable using the following code: `gis_repo <- 'path/to/shapefiles/folder', or add the following code to your .Rprofile using `file.edit(file.path('~', '.Rprofile'))`: `Sys.setenv(DATA_REPO = 'path/to/shapefiles/folder')`")
+}
+
+# Data repo (set for your own use)
+data_repo <- Sys.getenv("DATA_REPO")
+
+# Check if GIS repo is set
+if (data_repo == "") {
+  stop("Data repository not found. Set the DATA_REPO environment variable using the following code: `data_repo <- 'path/to/data/folder'`, or add the following code to your .Rprofile using `file.edit(file.path('~', '.Rprofile'))`: `Sys.setenv(DATA_REPO = 'path/to/data/folder')`")
+}
+
+# Other Global Settings
+set.seed(13) # Random seed for reproducibility
+options(scipen = 9999) # Large number for scientific notation preference
+
+
+# -----------------------------------------------------------------------------
+# 3. Themes and Table Defaults
+# -----------------------------------------------------------------------------
+
+# gtsummary Themes
+gtsummary::theme_gtsummary_journal(journal = "jama")
+gtsummary::theme_gtsummary_compact()
+
+# flextable Defaults (Font check!)
+flextable::set_flextable_defaults(
+  table.layout = "autofit", 
+  font.size = 10, 
+  font.family = "Times New Roman", # Ensure this font is available!
+  padding.top = 0, 
+  padding.bottom = 0
+)
+
+
+# -----------------------------------------------------------------------------
+# 4. Font Loading
+# -----------------------------------------------------------------------------
+
+# Enable showtext for custom fonts
+showtext::showtext_auto() 
+
+
+# -----------------------------------------------------------------------------
+# 5. API Key Registration
+# -----------------------------------------------------------------------------
+
+# Register API keys (after setting them as environment variables)
+
+# tidycensus
+tidycensus::census_api_key(census_api_key, overwrite = TRUE) 
+
+# Elsevier 
+rscopus::set_api_key(elsevier_api_key)  
+
+# Google Maps 
+ggmap::register_google(key = google_api_key) 
+
+
+# -----------------------------------------------------------------------------
+# 6.  Session Information
+# -----------------------------------------------------------------------------
+
+sessionInfo()
+
+
+# -----------------------------------------------------------------------------
+# 7. Confirmation output
+# -----------------------------------------------------------------------------
+
+stringr::str_glue("Options set. \n")
+
+
+# -----------------------------------------------------------------------------
+# End of Script
+# -----------------------------------------------------------------------------
+```
+
+## API Key Management (Environment Variables)
+
+-   Why environment variables?
+    -   Security: Keeps sensitive keys out of your code.
+    -   Flexibility: Easily change keys without modifying scripts.
+
+```{r}
+#| eval: false
+#| echo: true
+
+census_api_key <- Sys.getenv("CENSUS_API_KEY")
+if (census_api_key == "") {
+  print("Census API key not found.") # Don't stop in the presentation!
+} else {
+    print("Census API key found.")
+}
+```
+
+::: notes
+Give specific instructions for setting environment variables on different operating systems. Explain the `.Renviron` file.
+
+Now let's talk about setting environment variables. These are essentially variables that exist outside of your R scripts and can be accessed by the R session. They're perfect for storing sensitive information like API keys, file paths, and other global settings.
+
+There are several ways to set environment variables, depending on your operating system:
+
+-   Unix-based Systems (Linux, macOS, etc.):
+
+    -   Terminal: Simply type the following command, replacing KEY_NAME with your desired variable name and YOUR_VALUE with your desired value: `export KEY_NAME=YOUR_VALUE`
+
+    -   .Renviron file: Create a file named .Renviron in your home directory (\~/) or project directory. Add your environment variables in the format KEY_NAME=YOUR_VALUE, one per line. For example: `WEATHER_API_KEY=your_actual_api_key; MY_DATA_DIR=/path/to/my/data`
+
+    -   Environment variables are automatically set when you open a terminal in that directory or when you start RStudio.
+
+-   Windows:
+
+    -   Command Prompt: Use the set command with the same syntax as in Unix-based systems: `set KEY_NAME=YOUR_VALUE`
+
+    -   Environment Variables dialog: Right-click on the My Computer icon, select Properties, then Advanced System Settings, and then Environment Variables. Here you can add, edit, or delete environment variables.
+
+    -   .Renviron file: Create a file named .Renviron in your home directory (usually C:\Users%username%) or project directory. Add your environment variables in the format KEY_NAME=YOUR_VALUE, one per line. Note that Windows might not automatically load .Renviron files by default. You may need to enable it in the Environment Variables dialog.
+
+Advantages of using .Renviron:
+
+```         
+*   Security: Storing API keys and other sensitive information in .Renviron keeps them out of your R scripts, reducing the risk of accidental exposure.
+
+*   Portability: Environment variables set in .Renviron are available in all your R sessions on that machine, regardless of the specific directory you're working in.
+
+*   Organization: It keeps your environment variable definitions in a single, dedicated file, making them easier to manage.
+
+*   Important Note: Remember to restart your R session after making changes to your .Renviron file for the new environment variables to take effect.
+```
+
+Let's summarize:
+
+Use .Renviron for storing sensitive environment variables like API keys. Set environment variables using the appropriate commands for your operating system. Restart your R session after making changes to .Renviron for them to take effect. By using .Renviron, you can keep your R projects secure, organized, and portable. It's a good practice to adopt, especially when working with sensitive data or APIs.
+
+Here's a breakdown of why .Renviron is generally preferred over .Rprofile for storing environment variables, especially API keys and other sensitive information:
+
+1.  Security:
+
+-   .Renviron: The .Renviron file is specifically designed for storing environment variables. It's typically read very early in the R session startup process, before your R scripts are executed. This means that environment variables set in .Renviron are available to your R session, but the .Renviron file itself is usually not directly accessible from within your R scripts. This adds a layer of security, as it makes it harder for someone to accidentally print or expose the contents of your .Renviron file (and thus your API keys) while running your code.
+
+-   .Rprofile: The .Rprofile file, on the other hand, is executed as R starts. While you can set environment variables in .Rprofile using Sys.setenv(), the file itself is just regular R code. This means that the .Rprofile file could be inadvertently read or processed by your R scripts, potentially exposing your API keys if you're not extremely careful. This is a significant security risk.
+
+2.  Scope and Purpose:
+
+-   .Renviron: The primary purpose of .Renviron is to define environment variables. It's a dedicated configuration file for this specific task. Keeping environment variable definitions separate from other R startup code makes things cleaner and easier to manage.
+
+-   .Rprofile: The .Rprofile file is more general-purpose. It's used for setting various R options, loading packages, defining functions, and other startup configurations. Mixing environment variable definitions with other startup code in .Rprofile can make the file less organized and harder to maintain.
+
+3.  Best Practices:
+
+It's a widely accepted best practice to store sensitive information like API keys in .Renviron. This follows the principle of least privilege, where you only give your R scripts access to the environment variables they need, without giving them direct access to the file where those variables are defined.
+
+4.  How R Reads These Files:
+
+R reads .Renviron very early in the startup process. The environment variables are then set before any R code is executed. R reads .Rprofile later in the startup process. This means that any environment variables set in .Rprofile are set after the initial environment has been established (including those from .Renviron).
+
+5.  Practical Example:
+
+Imagine you have an API key for a weather service.
+
+.Renviron (Recommended):
+
+`WEATHER_API_KEY=your_actual_api_key`
+
+.Rprofile (Less Secure):
+
+`Sys.setenv(WEATHER_API_KEY = "your_actual_api_key") # Risk of exposure!`
+
+In the .Renviron example, your R scripts can access the WEATHER_API_KEY environment variable, but they cannot directly access the .Renviron file itself. In the .Rprofile example, there's a risk that your R code could accidentally read and print the contents of the .Rprofile file, potentially revealing the API key.
+
+In summary: While you can technically set environment variables in .Rprofile, it's strongly recommended to use .Renviron for security and organization reasons, especially when dealing with sensitive information like API keys. This separation of concerns makes your R projects more secure, reproducible, and easier to manage.
+:::
+
+## API Key Management (Environment Variables)
+
+```{r}
+#| eval: false 
+#| echo: true 
+
+# Project/Script Title: Setting Global Parameters and Resolving Conflicts
+# Author: N.F. Parsons
+# Date: 2025-02-05
+# Email: nathan.parsons@multco.us
+# Description: This script sets global parameters, resolves conflicts between packages,
+#              loads fonts, sets API keys, and sets a random seed for reproducibility.
+
+# -----------------------------------------------------------------------------
+# 1. Setup/Dependencies
+# -----------------------------------------------------------------------------
+
+# Install packages if not already installed (using a helper function)
+if (!require("pacman")) {
+  install.packages("pacman", repos = "https://cran.rstudio.org")
+}
+library(pacman)
+
+p_load("magick", "janitor", "dplyr", "tidycensus", "sysfonts", "rscopus", 
+       "gtsummary", "flextable", "showtext", "ggmap", "stringr")
+
+
+# -----------------------------------------------------------------------------
+# 2. Global Parameters/Constants
+# -----------------------------------------------------------------------------
+
+# API Keys (Store securely, ideally in environment variables)
+elsevier_api_key <- Sys.getenv("ELSEVIER_API_KEY")  # Get from environment
+census_api_key <- Sys.getenv("CENSUS_API_KEY") # Get from environment
+google_api_key <- Sys.getenv("GOOGLE_API_KEY") # Get from environment
+
+# Check if API keys are set (important for security)
+if (elsevier_api_key == "") {
+  stop("Elsevier API key not found. Set the ELSEVIER_API_KEY environment variable.")
+}
+if (census_api_key == "") {
+  stop("Census API key not found. Set the CENSUS_API_KEY environment variable.")
+}
+if (google_api_key == "") {
+  stop("Google API key not found. Set the GOOGLE_API_KEY environment variable.")
+}
+
+# GIS repo (set for your own use)
+gis_repo <- Sys.getenv("GIS_SHAPEFILE_REPO")
+
+# Check if GIS repo is set
+if (gis_repo == "") {
+  stop("GIS shapefile repository not found. Set the GIS_SHAPEFILE_REPO environment variable using the following code: `gis_repo <- 'path/to/shapefiles/folder', or add the following code to your .Rprofile using `file.edit(file.path('~', '.Rprofile'))`: `Sys.setenv(DATA_REPO = 'path/to/shapefiles/folder')`")
+}
+
+# Data repo (set for your own use)
+data_repo <- Sys.getenv("DATA_REPO")
+
+# Check if GIS repo is set
+if (data_repo == "") {
+  stop("Data repository not found. Set the DATA_REPO environment variable using the following code: `data_repo <- 'path/to/data/folder'`, or add the following code to your .Rprofile using `file.edit(file.path('~', '.Rprofile'))`: `Sys.setenv(DATA_REPO = 'path/to/data/folder')`")
+}
+
+# Other Global Settings
+set.seed(13) # Random seed for reproducibility
+options(scipen = 9999) # Large number for scientific notation preference
+
+
+# -----------------------------------------------------------------------------
+# 3. Themes and Table Defaults
+# -----------------------------------------------------------------------------
+
+# gtsummary Themes
+gtsummary::theme_gtsummary_journal(journal = "jama")
+gtsummary::theme_gtsummary_compact()
+
+# flextable Defaults (Font check!)
+flextable::set_flextable_defaults(
+  table.layout = "autofit", 
+  font.size = 10, 
+  font.family = "Times New Roman", # Ensure this font is available!
+  padding.top = 0, 
+  padding.bottom = 0
+)
+
+
+# -----------------------------------------------------------------------------
+# 4. Font Loading
+# -----------------------------------------------------------------------------
+
+# Enable showtext for custom fonts
+showtext::showtext_auto() 
+
+
+# -----------------------------------------------------------------------------
+# 5. API Key Registration
+# -----------------------------------------------------------------------------
+
+# Register API keys (after setting them as environment variables)
+
+# tidycensus
+tidycensus::census_api_key(census_api_key, overwrite = TRUE) 
+
+# Elsevier 
+rscopus::set_api_key(elsevier_api_key)  
+
+# Google Maps 
+ggmap::register_google(key = google_api_key) 
+
+
+# -----------------------------------------------------------------------------
+# 6.  Session Information
+# -----------------------------------------------------------------------------
+
+sessionInfo()
+
+
+# -----------------------------------------------------------------------------
+# 7. Confirmation output
+# -----------------------------------------------------------------------------
+
+stringr::str_glue("Options set. \n")
+
+
+# -----------------------------------------------------------------------------
+# End of Script
+# -----------------------------------------------------------------------------
+```
+
+## Reproducibility Best Practices
+
+-   Use `here` for file paths.
+-   Manage packages with `pacman`.
+-   Set a random seed (`set.seed()`).
+-   Store API keys and other global settings in environment variables.
+-   Version control (Git): Essential for tracking changes and collaboration.
+-   Document your code: Clear comments and explanations.
+-   Use Quarto for reproducible reports and presentations (like this one!).
+
+::: notes
+Emphasize the cumulative effect of these practices. Mention the benefits of Git and good documentation.
+
+So, we've covered a lot of ground in terms of individual best practices. But the real power comes from combining all of these techniques. It's the *cumulative effect* of using `here`, managing packages with `pacman`, setting a random seed, securing API keys, and so on, that truly makes your research reproducible. Each of these practices reinforces the others, creating a robust and reliable workflow.
+
+Think of it like building a house. You wouldn't just focus on the roof or the foundation; you need both, and all the other structural elements in between, to have a solid, stable building. Similarly, with reproducible research, you need all these best practices working together to create a reliable and verifiable analysis.
+
+Now, there are two more crucial elements I want to touch on: version control with Git and good documentation.
+
+**Version Control (Git):** Imagine making changes to your code and then realizing you've broken something. With Git, you can easily revert to previous versions of your code, track changes, and collaborate with others seamlessly. Git is like a time machine for your project, allowing you to go back and forth between different versions, experiment without fear, and understand the evolution of your analysis. It's absolutely essential for any project of significant complexity.
+
+**Good Documentation:** Even with the best project structure and code, if it's not well documented, it can be difficult for others (or even your future self) to understand what you did. Clear comments in your code, a well-written README file explaining the project structure and workflow, and using tools like Quarto for creating reproducible reports are all vital aspects of good documentation. Think of it as leaving a clear trail of breadcrumbs for anyone who wants to follow in your footsteps and reproduce your work.
+
+And, of course, we're using Quarto right now to create this very presentation! Quarto is itself a powerful tool for reproducibility, as it allows you to weave together narrative text, code, and results into a single, cohesive document.
+
+By combining all these best practices, you're not just making your research reproducible; you're also making it more robust, easier to understand, and more collaborative. It's an investment in the quality and longevity of your work.
+:::
+
+## Sharing Reproducible Research
+
+-   **Code Repositories (GitHub, GitLab, Bitbucket):**
+    -   Share your code, data, and documentation in a public repository.
+    -   Allows others to easily access, review, and contribute to your work.
+    -   Provides version control and issue tracking.
+
+::: notes
+Now that we've established how to create reproducible research, let's explore how to share it with the world. There are many excellent tools and platforms available to help you disseminate your work and make it truly reproducible by others.
+
+**Code Repositories:** Platforms like GitHub, GitLab, and Bitbucket are essential for sharing your code, data, and documentation. By creating a public repository, you allow anyone to access, review, and even contribute to your project. These platforms also provide built-in version control with Git, making it easy to track changes and collaborate.
+:::
+
+## Sharing Reproducible Research
+
+-   **R Packages:**
+    -   Package your analysis into an R package.
+    -   Makes it easy for others to install and use your code.
+    -   Provides a standardized structure for documentation and testing.
+
+::: notes
+**R Packages:** If your analysis is well-defined and could be useful to others, consider packaging it as an R package. This makes it incredibly easy for others to install and use your code. R packages also enforce a standardized structure for documentation and testing, further enhancing reproducibility.
+:::
+
+## Sharing Reproducible Research
+
+-   **Workflow Platforms (e.g., GitHub Actions, GitLab CI/CD):**
+    -   Automate the execution of your analysis.
+    -   Ensures that your code runs consistently and reliably.
+    -   Can be used to generate reports or dashboards.
+
+::: notes
+**Workflow Platforms:** Services like GitHub Actions and GitLab CI/CD can automate the execution of your analysis. This ensures that your code runs consistently and can be used to generate reports, dashboards, or other outputs on a regular basis.
+:::
+
+## Sharing Reproducible Research
+
+-   **Containers (e.g., Docker, Singularity):**
+    -   Package your analysis environment along with your code and data.
+    -   Guarantees that others can run your code with the same dependencies.
+    -   Provides platform independence.
+
+::: notes
+**Containers:** Tools like Docker and Singularity allow you to package your entire analysis environment, including your code, data, and all dependencies, into a single container. This guarantees that others can run your code with the exact same setup, regardless of their operating system or local environment.
+:::
+
+## Sharing Reproducible Research
+
+-   **Reproducible Research Platforms (e.g., Code Ocean, Whole Tale):**
+    -   Provide dedicated platforms for sharing and reproducing research.
+    -   Offer features like version control, environment capture, and interactive execution.
+
+::: notes
+**Reproducible Research Platforms:** Platforms like Code Ocean and Whole Tale are specifically designed for sharing and reproducing research. They offer features like version control, environment capture, and interactive execution, making it easy for others to explore and validate your work.
+:::
+
+## Sharing Reproducible Research
+
+-   **Preprint Servers (e.g., arXiv, bioRxiv):**
+    -   Share your findings early and get feedback.
+    -   Link to your code repository for full reproducibility.
+
+::: notes
+**Preprint Servers:** If you want to share your findings early and get feedback, consider posting a preprint on servers like arXiv or bioRxiv. Make sure to link to your code repository so that others can fully reproduce your analysis.
+:::
+
+## Sharing Reproducible Research
+
+-   **Archived Files (.zip,.tar.gz, etc.):**
+    -   Can be used to share a snapshot of your project.
+    -   **Limitations:** Lack of version control, difficulty in tracking changes, and potential for environment inconsistencies. Best used for final releases or when other options are not feasible. Should include clear instructions for setup and reproduction.
+
+::: notes
+**Archived Files (.zip,.tar.gz, etc.):** While code repositories, R packages, and other methods are generally preferred for sharing reproducible research, sometimes you might need to share your project as a simple archive, like a `.zip` file or a `.tar.gz` file. This can be useful for sharing a snapshot of your project at a specific point in time, perhaps for a final release or when other options are not feasible.
+
+However, it's important to be aware of the limitations of sharing research as a simple archive. First, `.zip` files lack version control. It's difficult to track changes made to the project over time. Second, it can be challenging for others to reproduce your work if the archive doesn't include clear instructions for setting up the environment and running the code. There's also a higher risk of environment inconsistencies, as the archive might not capture all the dependencies needed to run the analysis.
+
+If you do choose to share your research as an archive, make sure to include a comprehensive README file with detailed instructions for setting up the required environment, installing packages, and running the analysis. Clearly specify the R version and any other software dependencies. The more detail you provide, the easier it will be for others to reproduce your work. In general, though, consider code repositories or other methods whenever possible, as they offer better support for reproducibility and collaboration.
+:::
+
+## Conclusion
+
+-   The ["RStudio Project Structure" blog post on "R for the Rest of Us"](https://rfortherestofus.com/2021/08/rstudio-project-structure/). This is an excellent starting point and the inspiration for much of what we've discussed today.
+-   The documentation for [the `here` package](https://here.r-lib.org/). `here` is a powerful tool, and its documentation provides more advanced usage examples.
+-   [The `pacman` package documentation](https://github.com/trinker/pacman). Learn more about `pacman`'s features and how it can streamline your package management.
+
+::: notes
+Offer further resources for learning more about reproducible research. End with a call to action.
+
+We've covered a lot of ground today, from setting up a project with `here` to managing packages with `pacman`, handling global parameters and API keys, and exploring various ways to share your reproducible work. Let's quickly recap the key benefits of adopting these practices:
+
+-   Improved organization and readability of your code.
+-   Enhanced reproducibility of your analyses.
+-   Easier collaboration with colleagues.
+-   Increased confidence in your results.
+-   Greater impact of your research.
+:::
+
+## Conclusion
+
+-   [The Reproducible Research with R book by Christopher Gandrud](https://www.routledge.com/Reproducible-Research-with-R-and-RStudio/Gandrud/p/book/9780367143985). This is a comprehensive guide to reproducible research practices.
+-   [The "Reproducible Research" article on the R-bloggers website](https://www.r-bloggers.com/2022/02/data-analysis-reproducibility-with-r-and-rstudio/).
+
+::: notes
+I strongly encourage you to incorporate these techniques into your own R projects. They might seem like extra steps at first, but they will save you time and headaches in the long run, and most importantly, they will make your research more reliable and credible.
+
+Remember, reproducible research is not just a set of techniques; it's a mindset. It's about being meticulous, transparent, and making your work accessible and verifiable by others. By embracing this mindset and using the tools and practices we've discussed, you can elevate the quality and impact of your research.
+
+Thank you.
+:::
